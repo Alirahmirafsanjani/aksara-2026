@@ -139,25 +139,42 @@ export default function Logbook() {
                 <input value={form.bukti} onChange={(e) => setForm({ ...form, bukti: e.target.value })} placeholder="Tempel tautan atau pilih dari Dokumentasi di bawah" />
               </label>
               <div className="photo-picker">
-                <p className="pp-title">Pilih foto bukti dari Dokumentasi (ketuk satu foto):</p>
-                <div className="chips">
+                <p className="pp-title">Pilih satu foto bukti dari Dokumentasi</p>
+                <div className="chips" role="tablist" aria-label="Folder dokumentasi">
                   {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => setDocFolderId(f.id)}>{f.name}</button>)}
                 </div>
-                {docFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini.</p>}
+                {docFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini. Pilih folder lain atau unggah foto di menu Dokumentasi.</p>}
                 <div className="thumb-grid">
                   {docFiles.map((f) => (
-                    <button type="button" key={f.id} className={"thumb-item" + (f.id === pickFileId ? " sel" : "")} onClick={() => setPickFileId(f.id)} title={f.name}>
-                      <img src={f.thumbnailUrl} alt={f.name} loading="lazy" />
+                    <button type="button" key={f.id} className={"thumb-item" + (f.id === pickFileId ? " sel" : "")} onClick={() => setPickFileId(f.id)} title={f.name} aria-pressed={f.id === pickFileId}>
+                      <img src={f.thumbnailUrl} alt={f.name} loading="lazy" onError={(e) => { e.currentTarget.src = `/api/docs/files/${f.id}/content`; }} />
                       <span>{f.name}</span>
-                      {f.id === pickFileId && <span className="check">✓</span>}
+                      {f.id === pickFileId && <span className="check">Terpilih</span>}
                     </button>
                   ))}
                 </div>
-                <div className="row">
-                  <button type="button" className="primary" onClick={pickBukti} disabled={loading || !pickFileId}>Gunakan foto ini sebagai bukti</button>
-                  {pickFileId && <span className="hint">{docFiles.find((f) => f.id === pickFileId)?.name}</span>}
-                </div>
-                {form.bukti && <p className="hint">Bukti saat ini: <a href={form.bukti} target="_blank" rel="noreferrer">{form.bukti.slice(0, 80)}…</a></p>}
+                {(() => {
+                  const sel = docFiles.find((f) => f.id === pickFileId);
+                  if (!sel) return null;
+                  return (
+                    <div className="bukti-preview">
+                      <img src={sel.thumbnailUrl} alt={sel.name} onError={(e) => { e.currentTarget.src = `/api/docs/files/${sel.id}/content`; }} />
+                      <div>
+                        <p><strong>Foto dipilih:</strong> {sel.name}</p>
+                        <div className="row">
+                          <button type="button" className="primary" onClick={pickBukti} disabled={loading}>Gunakan sebagai bukti</button>
+                          <button type="button" onClick={() => setPickFileId("")}>Batalkan pilihan</button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {form.bukti && (
+                  <div className="bukti-saat-ini">
+                    <p className="hint">Bukti saat ini: <a href={form.bukti} target="_blank" rel="noreferrer">Buka tautan foto</a></p>
+                    <button type="button" onClick={() => setForm({ ...form, bukti: "" })}>Hapus bukti</button>
+                  </div>
+                )}
               </div>
               <div className="row">
                 <button className="primary" onClick={save} disabled={loading || !no}>Simpan logbook</button>
