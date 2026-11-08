@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { google } from "googleapis";
-import { writeFileSync, existsSync, readFileSync } from "fs";
+import { writeFileSync, existsSync, readFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { TOKEN_PATH, isOAuthConnected } from "../drive.js";
@@ -37,6 +37,7 @@ router.get("/callback", async (req, res, next) => {
     if (!code) return res.status(400).json({ error: "Kode OAuth tidak ada" });
     const oauth2 = oauthClient();
     const { tokens } = await oauth2.getToken(String(code));
+    mkdirSync(dirname(TOKEN_PATH), { recursive: true });
     writeFileSync(TOKEN_PATH, JSON.stringify({ refresh_token: tokens.refresh_token, obtained_at: new Date().toISOString() }, null, 2), { mode: 0o600 });
     res.type("html").send(`<h1>OAuth tersambung</h1><p>Kembali ke aplikasi. Token tersimpan di server.</p><script>location.href="/"</script>`);
   } catch (e) { next(e); }

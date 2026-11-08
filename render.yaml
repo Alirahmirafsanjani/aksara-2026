@@ -1,11 +1,13 @@
-# Render (atau Railway/Fly dengan Dockerfile): deploy satu service dari Dockerfile di repo root.
+# Render: deploy satu service dari Dockerfile di repo root.
 # Build: docker build . ; Start: node server/src/index.js
 # Env wajib di dashboard Render (jangan commit secret):
-#   GOOGLE_APPLICATION_CREDENTIALS=/app/server/credentials/aksara-2026-514022-584b4a49f95d.json
+#   GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/aksara-2026-514022-584b4a49f95d.json
 #   GOOGLE_DRIVE_DOC_PARENT_FOLDER_ID=1T3Ll14UO5ux7fsG9XmHnMimPMb9qW0Ce
 #   GOOGLE_DRIVE_LOG_BOOK_PARENT_FOLDER_ID=1KPltSlYvp8gboHi69aC7FzyDW98mjJPm
-# Catatan: file credentials/*.json tidak ikut git — tambahkan via Secret Files di Render / 
-# ganti dengan GOOGLE_APPLICATION_CREDENTIALS_JSON bila perlu, sesuai perubahan di server/src/drive.js.
+#   GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET (dari Google Cloud)
+#   GOOGLE_OAUTH_REDIRECT_URI=https://aksara-2026.onrender.com/api/auth/callback
+#   DATA_DIR=/data/aksara-data (Persistent Disk — simpan .tokens.json OAuth)
+# Secret File: aksara-2026-514022-584b4a49f95d.json = isi JSON service account.
 services:
   - type: web
     name: aksara-2026
@@ -16,3 +18,9 @@ services:
         value: 3000
       - key: NODE_ENV
         value: production
+      - key: DATA_DIR
+        value: /data/aksara-data
+    disks:
+      - name: aksara-data
+        mountPath: /data/aksara-data
+        sizeGB: 1

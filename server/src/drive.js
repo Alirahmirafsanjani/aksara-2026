@@ -34,9 +34,11 @@ export function driveClient() {
   return _drive;
 }
 
-// Klien Drive untuk UPLOAD: pakai OAuth user (punya kuota) bila server/.tokens.json ada,
+// Klien Drive untuk UPLOAD: pakai OAuth user (punya kuota) bila token ada,
 // selain itu fallback ke service account (tanpa kuota → upload ditolak Google).
-export const TOKEN_PATH = join(serverDir, ".tokens.json");
+// Di Render: DATA_DIR menunjuk Persistent Disk agar token awet antar deploy.
+export const DATA_DIR = process.env.DATA_DIR || process.env.GOOGLE_TOKENS_DIR || serverDir;
+export const TOKEN_PATH = process.env.GOOGLE_TOKENS_PATH || join(DATA_DIR, ".tokens.json");
 export function isOAuthConnected() {
   try {
     const raw = JSON.parse(readFileSync(TOKEN_PATH, "utf8"));
