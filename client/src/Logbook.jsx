@@ -13,6 +13,33 @@ export default function Logbook() {
   const [form, setForm] = useState(EMPTY);
   const [formRow, setFormRow] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [jamMulai, setJamMulai] = useState("");
+  const [jamSelesai, setJamSelesai] = useState("");
+  const parseWaktu = (s) => {
+    const t = String(s || "").match(/(\d{1,2})[.:](\d{2})/g) || [];
+    return t.length >= 2 ? [t[0].replace(".", ":").padStart(5, "0"), t[1].replace(".", ":").padStart(5, "0")] : ["", ""];
+  };
+  const toDot = (t) => (t || "").replace(":", ".");
+  const hitungDurasi = (a, b) => {
+    const [ah, am] = a.split(":").map(Number);
+    const [bh, bm] = b.split(":").map(Number);
+    let diff = (bh * 60 + bm) - (ah * 60 + am);
+    if (diff <= 0) diff += 24 * 60;
+    const h = Math.floor(diff / 60);
+    const m = diff % 60;
+    if (h && m) return `${h} jam ${m} menit`;
+    if (h) return `${h} jam`;
+    return `${m} menit`;
+  };
+  const onJam = (which, val) => {
+    const mulai = which === "mulai" ? val : jamMulai;
+    const selesai = which === "selesai" ? val : jamSelesai;
+    if (which === "mulai") setJamMulai(val); else setJamSelesai(val);
+    if (mulai && selesai) {
+      const waktu = `${toDot(mulai)} - ${toDot(selesai)}`;
+      setForm((s) => ({ ...s, waktu, durasi: hitungDurasi(mulai, selesai) }));
+    }
+  };
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -61,13 +88,15 @@ export default function Logbook() {
 
   const open = (e) => {
     setForm({ no: e.no, tanggal: e.tanggal, waktu: e.waktu, durasi: e.durasi, lokasi: e.lokasi, rincian: e.rincian, hasil: e.hasil, capaian: e.capaian, bukti: e.bukti });
+    const [a, b] = parseWaktu(e.waktu);
+    setJamMulai(a); setJamSelesai(b);
     setFormRow(e.rowIndex);
     setEditing(true);
     setMsg(""); setErr("");
   };
   const openNew = () => {
     if (!no) return setErr("Pilih mahasiswa dulu");
-    setForm(EMPTY); setFormRow(null); setEditing(true); setMsg(""); setErr("");
+    setForm(EMPTY); setFormRow(null); setJamMulai(""); setJamSelesai(""); setEditing(true); setMsg(""); setErr("");
   };
   const close = () => setEditing(false);
 
@@ -142,18 +171,25 @@ export default function Logbook() {
             <div className="form">
               {field("No", "no")}
               {field("Tanggal Pelaksanaan", "tanggal")}
-              {field("Waktu Pelaksanaan", "waktu")}
-              {field("Durasi", "durasi")}
+              <div className="row" style={{ alignItems: "flex-end" }}>
+                <label>Jam mulai<input type="time" value={jamMulai} onChange={(e) => onJam("mulai", e.target.value)} /></label>
+                <label>Jam selesai<input type="time" value={jamSelesai} onChange={(e) => onJam("selesai", e.target.value)} /></label>
+                <span className="hint">Isi jam mulai &amp; selesai → Waktu &amp; Durasi terisi otomatis.</span>
+              </div>
+              {field("Waktu Pelaksanaan (otomatis)", "waktu")}
+              {field("Durasi (otomatis)", "durasi")}
               {field("Lokasi Pelaksanaan", "lokasi")}
               {field("Rincian Pelaksanaan Kegiatan", "rincian", true)}
               {field("Hasil Pelaksanaan Kegiatan", "hasil", true)}
               {field("Capaian Kompetensi Mahasiswa", "capaian", true)}
+              <div className="bukti-info">
+                <strong>Keterangan bukti:</strong> hanya <strong>satu foto</strong> per catatan, diambil dari folder Dokumentasi (JPG/PNG/HEIC/WEBP; video tidak bisa jadi bukti). Foto harus menunjukkan kegiatan ini. Tautan tersimpan di kolom Bukti. Bila foto dihapus dari Drive, tautan bukti tidak lagi berlaku — ganti bukti lewat form ini.
+              </div>
               <label>Bukti Pelaksanaan Kegiatan (satu tautan foto)
                 <input value={form.bukti} onChange={(e) => setForm({ ...form, bukti: e.target.value })} placeholder="Tempel tautan atau pilih dari Dokumentasi di bawah" />
               </label>
               <div className="photo-picker">
                 <p className="pp-title">Pilih satu foto bukti dari Dokumentasi</p>
-                <p className="hint">Keterangan bukti: hanya <strong>satu foto</strong> per catatan, diambil dari folder Dokumentasi (JPG/PNG/HEIC/WEBP; video tidak bisa jadi bukti). Foto harus menunjukkan kegiatan ini. Tautan tersimpan di kolom Bukti. Bila foto dihapus dari Drive, tautan bukti tidak lagi berlaku — ganti bukti lewat form ini.</p>
                 <div className="chips" role="tablist" aria-label="Folder dokumentasi">
                   {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => setDocFolderId(f.id)}>{f.name}</button>)}
                 </div>
