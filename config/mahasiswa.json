@@ -1,0 +1,176 @@
+{
+  "_sumber": "Data Mahasiswa.xlsx (Sheet1) — diimpor 2026-11-08",
+  "total": 22,
+  "programStudi": [
+    "Sistem Informasi",
+    "PGSD",
+    "Gizi"
+  ],
+  "mahasiswa": [
+    {
+      "no": 1,
+      "nama": "Amadeus Defrino Putera Manggar",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1qqn53hg0FGBHSWQcTyv5QUZHkRcmGByYGG-Zie_kcxo",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1qqn53hg0FGBHSWQcTyv5QUZHkRcmGByYGG-Zie_kcxo/edit?usp=sharing"
+    },
+    {
+      "no": 2,
+      "nama": "Efansyah Purnomo Ariadin",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1Z2K2A9cIgbcuUX3ch3niR7YYVR_Z00vxQiQfZpgXu8U",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1Z2K2A9cIgbcuUX3ch3niR7YYVR_Z00vxQiQfZpgXu8U/edit?usp=sharing"
+    },
+    {
+      "no": 3,
+      "nama": "Khairunisa Hasna Sukrandono",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1x6rIfd5vPWxiBS-GNg7p7aPQhUjjwvnNdaaQhCVtjAs",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1x6rIfd5vPWxiBS-GNg7p7aPQhUjjwvnNdaaQhCVtjAs/edit?usp=sharing"
+    },
+    {
+      "no": 4,
+      "nama": "Melisah Salsa Bila",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1gjNrxlMnk-z8l6sOUljCJXKduS5QmLQ9xUPWrOfL8Es",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1gjNrxlMnk-z8l6sOUljCJXKduS5QmLQ9xUPWrOfL8Es/edit?usp=sharing"
+    },
+    {
+      "no": 5,
+      "nama": "Khoiris Shibyan",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1OowkJgW25qe5Mb2CZxgL6rSYxQ9OGzOPSJL2Ch3W0-Q",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1OowkJgW25qe5Mb2CZxgL6rSYxQ9OGzOPSJL2Ch3W0-Q/edit?usp=sharing"
+    },
+    {
+      "no": 6,
+      "nama": "Ali Rahmi Rafsanjani",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1jvcOTytNPv8-weeV6ZivDwpyf35oHPhWcUnTME3VLbM",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1jvcOTytNPv8-weeV6ZivDwpyf35oHPhWcUnTME3VLbM/edit?usp=sharing"
+    },
+    {
+      "no": 7,
+      "nama": "Kharisma Yogi Meiana",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "16-MsVtf0m3jdaWRC7v_NP6njf3iMF3LEWKh7I9eL0jo",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/16-MsVtf0m3jdaWRC7v_NP6njf3iMF3LEWKh7I9eL0jo/edit?usp=sharing"
+    },
+    {
+      "no": 8,
+      "nama": "Moh. Jailani",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1cxSwDsTeKfS_Jb7JcOg3dGa-QVquBGQQ58kd62rGS3w",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1cxSwDsTeKfS_Jb7JcOg3dGa-QVquBGQQ58kd62rGS3w/edit?usp=sharing"
+    },
+    {
+      "no": 9,
+      "nama": "Muhammad Ikhsanudin Tri Wibowo",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1XjN8vRGCPGtVgiVKVnXf2SbiVvv4Tx79rLCSPs036jk",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1XjN8vRGCPGtVgiVKVnXf2SbiVvv4Tx79rLCSPs036jk/edit?usp=sharing"
+    },
+    {
+      "no": 10,
+      "nama": "Talitha Syifa Salsabila",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1ZaPpb3gkAbeSalM7uNY2pSgXuVhc-kcxL-Czum8X2N0",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1ZaPpb3gkAbeSalM7uNY2pSgXuVhc-kcxL-Czum8X2N0/edit?usp=sharing"
+    },
+    {
+      "no": 11,
+      "nama": "Octavia Nur Khasanah",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "1cIFoldX4iQccTV0htKm8nUnfWi-SSuLgqdXeHFBFJ2w",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1cIFoldX4iQccTV0htKm8nUnfWi-SSuLgqdXeHFBFJ2w/edit?usp=sharing"
+    },
+    {
+      "no": 12,
+      "nama": "Oktania Nahriyani Nazhifa",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1QXm488o3hjd_ME9NxKgQ8hMbIQIpjA7HzCByumsdBcg",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1QXm488o3hjd_ME9NxKgQ8hMbIQIpjA7HzCByumsdBcg/edit?usp=sharing"
+    },
+    {
+      "no": 13,
+      "nama": "Wanda Latifah Hanum",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1bWOEcIp27Lfd1QlXYlrx9J5HzBnhEpHS4viGnpnn1TE",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1bWOEcIp27Lfd1QlXYlrx9J5HzBnhEpHS4viGnpnn1TE/edit?usp=sharing"
+    },
+    {
+      "no": 14,
+      "nama": "Alfiyatun Hasanah",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1u9i3jcMqTQ6kPtHXcQaL7BWSSl7XginUkucTOQZLtDM",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1u9i3jcMqTQ6kPtHXcQaL7BWSSl7XginUkucTOQZLtDM/edit?usp=sharing"
+    },
+    {
+      "no": 15,
+      "nama": "Latifa Anjani",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1EPq5qZBwJw2dV8NgzYGXQLSeYZXMwb9awvjqn-b7mHs",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1EPq5qZBwJw2dV8NgzYGXQLSeYZXMwb9awvjqn-b7mHs/edit?usp=sharing"
+    },
+    {
+      "no": 16,
+      "nama": "Dwiky Wahyudi",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1WiobeZAZriCCVvjULSDlMM4VULVp0vpBCzHdQ-MNz0g",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1WiobeZAZriCCVvjULSDlMM4VULVp0vpBCzHdQ-MNz0g/edit?usp=sharing"
+    },
+    {
+      "no": 17,
+      "nama": "Kezia Raisa Kinaira",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1FL5Cd3jHp1SZsSXqLIFFrQYE0JoI62OGm3NwYnM4vuA",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1FL5Cd3jHp1SZsSXqLIFFrQYE0JoI62OGm3NwYnM4vuA/edit?usp=sharing"
+    },
+    {
+      "no": 18,
+      "nama": "Raihan Ibnu Mubarok",
+      "programStudi": "Gizi",
+      "spreadsheetId": "17IYf7CpN39Yeg44gQ86-e_Qe7dakZ00434mo83e9or8",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/17IYf7CpN39Yeg44gQ86-e_Qe7dakZ00434mo83e9or8/edit?usp=sharing"
+    },
+    {
+      "no": 19,
+      "nama": "Muhammad Nur Ilham",
+      "programStudi": "Gizi",
+      "spreadsheetId": "1Kjl2F7EJ9G0mN4qYIU9m_uhwOiXPSb5Gie7wQK6jVVo",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1Kjl2F7EJ9G0mN4qYIU9m_uhwOiXPSb5Gie7wQK6jVVo/edit?usp=sharing"
+    },
+    {
+      "no": 20,
+      "nama": "Dini Tri Wahyuni",
+      "programStudi": "PGSD",
+      "spreadsheetId": "1LTmkxJgI0O2uyICQHdcB2RP-5e2eRS4fltXvEBgXUR8",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1LTmkxJgI0O2uyICQHdcB2RP-5e2eRS4fltXvEBgXUR8/edit?usp=sharing"
+    },
+    {
+      "no": 21,
+      "nama": "Yuana Amelia",
+      "programStudi": "PGSD",
+      "spreadsheetId": "133VLFa2MsqBeu1AGY8jcufIugl1SUsyy5Df02fVT9J0",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/133VLFa2MsqBeu1AGY8jcufIugl1SUsyy5Df02fVT9J0/edit?usp=sharing"
+    },
+    {
+      "no": 22,
+      "nama": "Fadlan Qolbi",
+      "programStudi": "PGSD",
+      "spreadsheetId": "18lQAW1VseqRbGFMbQgMfp6vr4-3m9wbj10xX3nLI-KM",
+      "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/18lQAW1VseqRbGFMbQgMfp6vr4-3m9wbj10xX3nLI-KM/edit?usp=sharing"
+    }
+  ],
+  "kolomLogbook": [
+    "No",
+    "Tanggal Pelaksanaan",
+    "Waktu Pelaksanaan",
+    "Durasi",
+    "Lokasi Pelaksanaan",
+    "Rincian Pelaksanaan Kegiatan",
+    "Hasil Pelaksanaan Kegiatan",
+    "Capaian Kompetensi Mahasiswa",
+    "Bukti Pelaksanaan Kegiatan"
+  ]
+}

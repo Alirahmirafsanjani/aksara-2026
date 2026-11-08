@@ -1,0 +1,13 @@
+# Tahap 1 – gitignore
+node_modules/
+.env
+.env.local
+server/.env
+server/.env.*
+!server/.env.example
+server/credentials/*.json
+server/.tokens.json
+dist/
+build/
+*.log
+.DS_Store

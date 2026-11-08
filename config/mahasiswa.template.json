@@ -1,0 +1,20 @@
+{
+  "$schemaNote": "Template Tahap 1. Isi dengan data ASLI 22 mahasiswa dari daftar resmi. JANGAN mengarang nama/ID. Kolom spreadsheetId: ID spreadsheet per mahasiswa dari folder Sistem Informasi / PGSD / Gizi. Kolom driveFolderId: ID folder per mahasiswa bila ada. Hapus _note sebelum production.",
+  "_note": "PENDING USER INPUT: 22 nama + prodi + spreadsheetId belum tersedia di workspace. File ini template saja.",
+  "programStudi": ["Sistem Informasi", "PGSD", "Gizi"],
+  "mahasiswa": [
+    {
+      "nama": "CONTOH – isi nama asli 1",
+      "programStudi": "Sistem Informasi",
+      "spreadsheetId": "GANTI_DENGAN_ID_SPREADSHEET_ASLI",
+      "spreadsheetName": "CONTOH – nama sheet/tab, default: Sheet1 bila belum diketahui",
+      "driveFolderId": ""
+    }
+  ],
+  "validasi": {
+    "totalExpected": 22,
+    "programStudiExpected": 3,
+    "spreadsheetIdPattern": "ID Google Sheets (alfanumerik, panjang umum 30-50 char)",
+    "kolomLogbook": ["No", "Tanggal Pelaksanaan", "Waktu Pelaksanaan", "Durasi", "Lokasi Pelaksanaan", "Rincian Pelaksanaan Kegiatan", "Hasil Pelaksanaan Kegiatan", "Capaian Kompetensi Mahasiswa", "Bukti Pelaksanaan Kegiatan"]
+  }
+}
