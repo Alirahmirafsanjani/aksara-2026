@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { listProdi, listMahasiswa, listEntries, saveEntry, listFolders, listFiles } from "./api.js";
 
-const EMPTY = { no: "", tanggal: "", waktu: "", durasi: "", lokasi: "", rincian: "", hasil: "", capaian: "", bukti: "" };
+const EMPTY = { no: "", tanggal: "", waktu: "", durasi: "", lokasi: "", rincian: "", hasil: "", capaian: "", bukti: "", keteranganBukti: "" };
 
 export default function Logbook() {
   const [prodis, setProdis] = useState(["Sistem Informasi", "PGSD", "Gizi"]);
@@ -87,7 +87,7 @@ export default function Logbook() {
   useEffect(() => { if (docFolderId) listFiles(docFolderId).then((d) => setDocFiles(d.files || [])).catch(() => setDocFiles([])); }, [docFolderId]);
 
   const open = (e) => {
-    setForm({ no: e.no, tanggal: e.tanggal, waktu: e.waktu, durasi: e.durasi, lokasi: e.lokasi, rincian: e.rincian, hasil: e.hasil, capaian: e.capaian, bukti: e.bukti });
+    setForm({ no: e.no, tanggal: e.tanggal, waktu: e.waktu, durasi: e.durasi, lokasi: e.lokasi, rincian: e.rincian, hasil: e.hasil, capaian: e.capaian, bukti: e.bukti, keteranganBukti: e.keteranganBukti || "" });
     const [a, b] = parseWaktu(e.waktu);
     setJamMulai(a); setJamSelesai(b);
     setFormRow(e.rowIndex);
@@ -156,6 +156,7 @@ export default function Logbook() {
                 <div className="e-head"><b>No {e.no || "-"} · {e.tanggal || "-"}</b><span className={"chip" + (e.filled ? " on" : "")}>{e.filled ? "Terisi" : "Belum"}</span></div>
                 <div className="e-meta">{e.waktu || "—"} · {e.lokasi || "—"}</div>
                 <div className="e-rincian">{e.rincian || <i>belum diisi — ketuk untuk mengisi</i>}</div>
+                {e.keteranganBukti && <div className="e-meta">Keterangan bukti: {e.keteranganBukti}</div>}
                 {e.bukti && e.bukti.startsWith("http") && <span className="e-bukti" onClick={(ev) => { ev.stopPropagation(); window.open(e.bukti, "_blank"); }}>Bukti foto ↗</span>}
               </li>
             ))}
@@ -187,6 +188,9 @@ export default function Logbook() {
               </div>
               <label>Bukti Pelaksanaan Kegiatan (satu tautan foto)
                 <input value={form.bukti} onChange={(e) => setForm({ ...form, bukti: e.target.value })} placeholder="Tempel tautan atau pilih dari Dokumentasi di bawah" />
+              </label>
+              <label>Keterangan bukti
+                <input value={form.keteranganBukti} onChange={(e) => setForm({ ...form, keteranganBukti: e.target.value })} placeholder="Contoh: Foto para peserta di Balai Kalurahan Salam" />
               </label>
               <div className="photo-picker">
                 <p className="pp-title">Pilih satu foto bukti dari Dokumentasi</p>

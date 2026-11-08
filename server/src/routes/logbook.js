@@ -11,21 +11,32 @@ async function sheetTitle(spreadsheetId) {
   return t;
 }
 
+function splitBukti(cell) {
+  const s = String(cell ?? "").trim();
+  const i = s.indexOf("|");
+  if (i < 0) return { bukti: s, keteranganBukti: "" };
+  return { bukti: s.slice(0, i).trim(), keteranganBukti: s.slice(i + 1).trim() };
+}
 function rowToEntry(r, rowIndex) {
   // r: array 9 kolom, rowIndex: nomor baris 1-based di sheet
-  const [no, tanggal, waktu, durasi, lokasi, rincian, hasil, capaian, bukti] = [
+  const [no, tanggal, waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell] = [
     r?.[0] ?? "", r?.[1] ?? "", r?.[2] ?? "", r?.[3] ?? "", r?.[4] ?? "", r?.[5] ?? "", r?.[6] ?? "", r?.[7] ?? "", r?.[8] ?? "",
   ];
-  const filled = [waktu, durasi, lokasi, rincian, hasil, capaian, bukti].some((x) => String(x).trim() !== "");
-  return { rowIndex, no: String(no ?? "").trim(), tanggal: String(tanggal ?? "").trim(), waktu: String(waktu ?? "").trim(), durasi: String(durasi ?? "").trim(), lokasi: String(lokasi ?? "").trim(), rincian: String(rincian ?? "").trim(), hasil: String(hasil ?? "").trim(), capaian: String(capaian ?? "").trim(), bukti: String(bukti ?? "").trim(), filled };
+  const { bukti, keteranganBukti } = splitBukti(buktiCell);
+  const filled = [waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell].some((x) => String(x).trim() !== "");
+  return { rowIndex, no: String(no ?? "").trim(), tanggal: String(tanggal ?? "").trim(), waktu: String(waktu ?? "").trim(), durasi: String(durasi ?? "").trim(), lokasi: String(lokasi ?? "").trim(), rincian: String(rincian ?? "").trim(), hasil: String(hasil ?? "").trim(), capaian: String(capaian ?? "").trim(), bukti, keteranganBukti, filled };
 }
 
 function entryToRow(e) {
-  return [String(e.no ?? "").trim(), String(e.tanggal ?? "").trim(), String(e.waktu ?? "").trim(), String(e.durasi ?? "").trim(), String(e.lokasi ?? "").trim(), String(e.rincian ?? "").trim(), String(e.hasil ?? "").trim(), String(e.capaian ?? "").trim(), String(e.bukti ?? "").trim()];
+  const b = String(e.bukti ?? "").trim();
+  const k = String(e.keteranganBukti ?? "").trim();
+  const buktiCell = b && k ? `${b} | ${k}` : (b || k);
+  return [String(e.no ?? "").trim(), String(e.tanggal ?? "").trim(), String(e.waktu ?? "").trim(), String(e.durasi ?? "").trim(), String(e.lokasi ?? "").trim(), String(e.rincian ?? "").trim(), String(e.hasil ?? "").trim(), String(e.capaian ?? "").trim(), buktiCell];
 }
 function validateEntry(e) {
   if (!e.no || !e.tanggal) return "No dan Tanggal wajib diisi";
   if (String(e.bukti || "").length > 1000) return "Tautan bukti terlalu panjang";
+  if (String(e.keteranganBukti || "").length > 500) return "Keterangan bukti terlalu panjang (maks 500)";
   return null;
 }
 
@@ -63,7 +74,7 @@ router.post("/:no/entries", async (req, res, next) => {
   try {
     const m = findMahasiswaByNo(req.params.no);
     if (!m) return res.status(404).json({ error: "Mahasiswa tidak ditemukan" });
-    const e = { no: req.body?.no, tanggal: req.body?.tanggal, waktu: req.body?.waktu, durasi: req.body?.durasi, lokasi: req.body?.lokasi, rincian: req.body?.rincian, hasil: req.body?.hasil, capaian: req.body?.capaian, bukti: req.body?.bukti || "" };
+    const e = { no: req.body?.no, tanggal: req.body?.tanggal, waktu: req.body?.waktu, durasi: req.body?.durasi, lokasi: req.body?.lokasi, rincian: req.body?.rincian, hasil: req.body?.hasil, capaian: req.body?.capaian, bukti: req.body?.bukti || "", keteranganBukti: req.body?.keteranganBukti || "" };
     const err = validateEntry(e);
     if (err) return res.status(400).json({ error: err });
     const title = await sheetTitle(m.spreadsheetId);
@@ -94,7 +105,7 @@ router.put("/:no/entries/:rowIndex", async (req, res, next) => {
     if (!m) return res.status(404).json({ error: "Mahasiswa tidak ditemukan" });
     const rowIndex = Number(req.params.rowIndex);
     if (!Number.isInteger(rowIndex) || rowIndex < 2 || rowIndex > 200) return res.status(400).json({ error: "rowIndex tidak valid" });
-    const e = { no: req.body?.no, tanggal: req.body?.tanggal, waktu: req.body?.waktu, durasi: req.body?.durasi, lokasi: req.body?.lokasi, rincian: req.body?.rincian, hasil: req.body?.hasil, capaian: req.body?.capaian, bukti: req.body?.bukti || "" };
+    const e = { no: req.body?.no, tanggal: req.body?.tanggal, waktu: req.body?.waktu, durasi: req.body?.durasi, lokasi: req.body?.lokasi, rincian: req.body?.rincian, hasil: req.body?.hasil, capaian: req.body?.capaian, bukti: req.body?.bukti || "", keteranganBukti: req.body?.keteranganBukti || "" };
     const err = validateEntry(e);
     if (err) return res.status(400).json({ error: err });
     const title = await sheetTitle(m.spreadsheetId);
