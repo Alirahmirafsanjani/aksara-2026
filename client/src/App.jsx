@@ -9,6 +9,8 @@ export default function App() {
   const [folders, setFolders] = useState([]);
   const [folderId, setFolderId] = useState("");
   const [files, setFiles] = useState([]);
+  const [subfolders, setSubfolders] = useState([]);
+  const [path, setPath] = useState([]); // [{id,name}] urutan dari root
   const [folderName, setFolderName] = useState("");
   const [newFolder, setNewFolder] = useState("");
   const [selected, setSelected] = useState([]);
@@ -33,10 +35,19 @@ export default function App() {
     try {
       const d = await listFiles(folderId);
       setFiles(d.files || []);
+      setSubfolders(d.subfolders || []);
       setFolderName(d.folder?.name || folders.find((f) => f.id === folderId)?.name || "");
-    } catch (e) { setErr(e.message); setFiles([]); }
+    } catch (e) { setErr(e.message); setFiles([]); setSubfolders([]); }
     setLoading(false);
   }, [folderId, folders]);
+
+  const drill = (sub) => { setPath((p) => [...p, { id: folderId, name: folderName || "Folder" }]); setFolderId(sub.id); };
+  const goBack = () => {
+    const p = [...path];
+    const prev = p.pop();
+    setPath(p);
+    if (prev) setFolderId(prev.id);
+  };
 
   useEffect(() => { loadFolders(); }, [loadFolders]);
   useEffect(() => { loadFiles(); }, [loadFiles]);
@@ -111,12 +122,18 @@ export default function App() {
             {err && <p className="error">{err}</p>}
             {msg && <p className="ok">{msg}</p>}
             <div className="row">
-              <select value={folderId} onChange={(e) => setFolderId(e.target.value)} aria-label="Pilih folder">
+              <select value={folders.some((f) => f.id === folderId) ? folderId : ""} onChange={(e) => { setPath([]); setFolderId(e.target.value); }} aria-label="Pilih folder">
                 {folders.length === 0 && <option value="">Tidak ada folder</option>}
                 {folders.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
               <button onClick={loadFolders} disabled={loading}>Muat ulang</button>
             </div>
+            {(path.length > 0 || subfolders.length > 0) && (
+              <div className="crumb">
+                <button onClick={goBack} disabled={path.length === 0}>Kembali</button>
+                <span>{[...path.map((p) => p.name), folderName].filter(Boolean).join(" / ") || "—"}</span>
+              </div>
+            )}
             <form className="row" onSubmit={doCreate}>
               <input value={newFolder} onChange={(e) => setNewFolder(e.target.value)} placeholder="Nama folder baru (mis. Day 5)" />
               <button type="submit" disabled={loading}>Buat folder</button>
@@ -135,8 +152,16 @@ export default function App() {
 
           <section className="card">
             <h2>{folderName ? `Foto — ${folderName}` : "Foto"} ({files.length})</h2>
+            {subfolders.length > 0 && (
+              <div className="subfolders">
+                <p className="hint">Subfolder ({subfolders.length}) — ketuk untuk masuk:</p>
+                <div className="chips">
+                  {subfolders.map((s) => <button key={s.id} className="chip-folder" onClick={() => drill(s)}>{s.name}</button>)}
+                </div>
+              </div>
+            )}
             {loading && <p>Memuat...</p>}
-            {!loading && files.length === 0 && <p className="hint">Tidak ada foto di folder ini.</p>}
+            {!loading && files.length === 0 && <p className="hint">{subfolders.length > 0 ? "Folder ini berisi subfolder di atas; ketuk untuk melihat fotonya." : "Tidak ada foto di folder ini."}</p>}
             <div className="grid">
               {files.map((f, i) => {
                 const isVideo = String(f.mimeType || "").startsWith("video/");

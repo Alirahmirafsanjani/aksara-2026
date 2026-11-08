@@ -49,6 +49,9 @@ h2{margin:2px 0 8px;font-size:18px;color:var(--slate)}h3{margin:4px 0 8px;font-s
 .form{display:grid;gap:10px}
 .form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#334155}
 .form input,.form textarea,.form select{padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;width:100%;background:#fff}
+.crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:13px;color:#475569}
+.crumb button{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.subfolders{margin-bottom:12px}
 .bukti-info{border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;padding:10px 12px;font-size:13px;color:#1e3a8a}
 .photo-picker{border:1px solid var(--line);border-radius:12px;padding:14px;background:#f8fafc}
 .pp-title{margin:0 0 10px;font-weight:800;font-size:13px}

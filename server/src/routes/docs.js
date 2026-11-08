@@ -50,17 +50,20 @@ router.post("/folders", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// GET /api/docs/folders/:id/files
+// GET /api/docs/folders/:id/files — file + subfolder (rekursif, navigasi frontend)
 router.get("/folders/:id/files", async (req, res, next) => {
   try {
     const drive = driveClient();
     const folder = await assertFolder(drive, req.params.id);
-    const q = `'${req.params.id}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`;
-    const { data } = await drive.files.list({
-      q, fields: "files(id,name,mimeType,size,createdTime,modifiedTime,thumbnailLink,webViewLink,parents)", pageSize: 200, orderBy: "createdTime desc",
-    });
-    const files = (data.files || []).map(toFile);
-    res.json({ folder: { id: folder.id, name: folder.name }, files });
+    const qFiles = `'${req.params.id}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`;
+    const qSubs = `'${req.params.id}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`;
+    const [{ data: df }, { data: ds }] = await Promise.all([
+      drive.files.list({ q: qFiles, fields: "files(id,name,mimeType,size,createdTime,modifiedTime,thumbnailLink,webViewLink,parents)", pageSize: 200, orderBy: "createdTime desc" }),
+      drive.files.list({ q: qSubs, fields: "files(id,name)", pageSize: 100, orderBy: "name" }),
+    ]);
+    const files = (df.files || []).map(toFile);
+    const subfolders = (ds.files || []).map((f) => ({ id: f.id, name: f.name }));
+    res.json({ folder: { id: folder.id, name: folder.name }, subfolders, files });
   } catch (e) { next(e); }
 });
 

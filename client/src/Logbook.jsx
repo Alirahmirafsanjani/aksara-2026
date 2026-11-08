@@ -46,6 +46,8 @@ export default function Logbook() {
   const [docFolders, setDocFolders] = useState([]);
   const [docFolderId, setDocFolderId] = useState("");
   const [docFiles, setDocFiles] = useState([]);
+  const [docSubs, setDocSubs] = useState([]);
+  const [pickerPath, setPickerPath] = useState([]);
   const [pickFileId, setPickFileId] = useState("");
   const [visibleCount, setVisibleCount] = useState(48);
   const photoFiles = docFiles.filter((f) => String(f.mimeType || "").startsWith("image/"));
@@ -84,7 +86,7 @@ export default function Logbook() {
   }, []);
 
   useEffect(() => { setNo(""); setEntries([]); if (prodi) loadAll(prodi, ""); }, [prodi, loadAll]);
-  useEffect(() => { if (docFolderId) listFiles(docFolderId).then((d) => setDocFiles(d.files || [])).catch(() => setDocFiles([])); }, [docFolderId]);
+  useEffect(() => { if (docFolderId) listFiles(docFolderId).then((d) => { setDocFiles(d.files || []); setDocSubs(d.subfolders || []); }).catch(() => { setDocFiles([]); setDocSubs([]); }); }, [docFolderId]);
 
   const open = (e) => {
     setForm({ no: e.no, tanggal: e.tanggal, waktu: e.waktu, durasi: e.durasi, lokasi: e.lokasi, rincian: e.rincian, hasil: e.hasil, capaian: e.capaian, bukti: e.bukti, keteranganBukti: e.keteranganBukti || "" });
@@ -195,8 +197,19 @@ export default function Logbook() {
               <div className="photo-picker">
                 <p className="pp-title">Pilih satu foto bukti dari Dokumentasi</p>
                 <div className="chips" role="tablist" aria-label="Folder dokumentasi">
-                  {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => setDocFolderId(f.id)}>{f.name}</button>)}
+                  {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => { setPickerPath([]); setDocFolderId(f.id); }}>{f.name}</button>)}
                 </div>
+                {(pickerPath.length > 0 || docSubs.length > 0) && (
+                  <div className="crumb">
+                    <button type="button" onClick={() => { const p = [...pickerPath]; const prev = p.pop(); setPickerPath(p); if (prev) setDocFolderId(prev.id); }} disabled={pickerPath.length === 0}>Kembali</button>
+                    <span>{docSubs.length > 0 ? `Subfolder: ${docSubs.map((s) => s.name).join(", ")}` : ""} — ketuk untuk masuk:</span>
+                  </div>
+                )}
+                {docSubs.length > 0 && (
+                  <div className="chips">
+                    {docSubs.map((s) => <button type="button" key={s.id} className="chip-folder" onClick={() => { setPickerPath((p) => [...p, { id: docFolderId, name: "" }]); setDocFolderId(s.id); }}>{s.name}</button>)}
+                  </div>
+                )}
                 <p className="hint">Menampilkan {Math.min(visibleCount, photoFiles.length)} dari {photoFiles.length} foto (hanya gambar; video disembunyikan).</p>
                 {photoFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini. Pilih folder lain atau unggah foto di menu Dokumentasi.</p>}
                 <div className="thumb-grid">
