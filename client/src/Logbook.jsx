@@ -20,6 +20,19 @@ export default function Logbook() {
   const [docFolderId, setDocFolderId] = useState("");
   const [docFiles, setDocFiles] = useState([]);
   const [pickFileId, setPickFileId] = useState("");
+  const [visibleCount, setVisibleCount] = useState(48);
+  const photoFiles = docFiles.filter((f) => String(f.mimeType || "").startsWith("image/"));
+  useEffect(() => { setVisibleCount(48); setPickFileId(""); }, [docFolderId]);
+
+  const thumbFallback = (ev, f) => {
+    const mime = String(f.mimeType || "");
+    // HEIC asli tidak bisa dirender <img>: tampilkan placeholder, jangan fallback ke binary HEIC
+    if (mime === "image/heic" || mime === "image/heif") {
+      ev.currentTarget.src = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="140"><rect width="100%" height="100%" fill="#e2e8f0"/><text x="50%" y="50%" font-size="13" text-anchor="middle" fill="#64748b">HEIC — thumbnail belum termuat</text></svg>`);
+      return;
+    }
+    if (!ev.currentTarget.dataset.fbk) { ev.currentTarget.dataset.fbk = "1"; ev.currentTarget.src = `/api/docs/files/${f.id}/content`; }
+  };
 
   const loadAll = useCallback(async (pr, n) => {
     setErr(""); setLoading(true);
@@ -140,25 +153,28 @@ export default function Logbook() {
               </label>
               <div className="photo-picker">
                 <p className="pp-title">Pilih satu foto bukti dari Dokumentasi</p>
+                <p className="hint">Keterangan bukti: hanya <strong>satu foto</strong> per catatan, diambil dari folder Dokumentasi (JPG/PNG/HEIC/WEBP; video tidak bisa jadi bukti). Foto harus menunjukkan kegiatan ini. Tautan tersimpan di kolom Bukti. Bila foto dihapus dari Drive, tautan bukti tidak lagi berlaku — ganti bukti lewat form ini.</p>
                 <div className="chips" role="tablist" aria-label="Folder dokumentasi">
                   {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => setDocFolderId(f.id)}>{f.name}</button>)}
                 </div>
-                {docFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini. Pilih folder lain atau unggah foto di menu Dokumentasi.</p>}
+                <p className="hint">Menampilkan {Math.min(visibleCount, photoFiles.length)} dari {photoFiles.length} foto (hanya gambar; video disembunyikan).</p>
+                {photoFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini. Pilih folder lain atau unggah foto di menu Dokumentasi.</p>}
                 <div className="thumb-grid">
-                  {docFiles.map((f) => (
+                  {photoFiles.slice(0, visibleCount).map((f) => (
                     <button type="button" key={f.id} className={"thumb-item" + (f.id === pickFileId ? " sel" : "")} onClick={() => setPickFileId(f.id)} title={f.name} aria-pressed={f.id === pickFileId}>
-                      <img src={f.thumbnailUrl} alt={f.name} loading="lazy" onError={(e) => { e.currentTarget.src = `/api/docs/files/${f.id}/content`; }} />
+                      <img src={f.thumbnailUrl} alt={f.name} loading="lazy" decoding="async" onError={(e) => thumbFallback(e, f)} />
                       <span>{f.name}</span>
                       {f.id === pickFileId && <span className="check">Terpilih</span>}
                     </button>
                   ))}
                 </div>
+                {visibleCount < photoFiles.length && <div className="row"><button type="button" onClick={() => setVisibleCount((n) => n + 48)}>Tampilkan 48 foto lagi</button></div>}
                 {(() => {
                   const sel = docFiles.find((f) => f.id === pickFileId);
                   if (!sel) return null;
                   return (
                     <div className="bukti-preview">
-                      <img src={sel.thumbnailUrl} alt={sel.name} onError={(e) => { e.currentTarget.src = `/api/docs/files/${sel.id}/content`; }} />
+                      <img src={sel.thumbnailUrl} alt={sel.name} onError={(e) => thumbFallback(e, sel)} />
                       <div>
                         <p><strong>Foto dipilih:</strong> {sel.name}</p>
                         <div className="row">
