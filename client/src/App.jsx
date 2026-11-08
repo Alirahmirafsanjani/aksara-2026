@@ -91,10 +91,13 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Aksara 2026</h1>
+        <div>
+          <h1>🌾 Aksara 2026</h1>
+          <p className="sub">Logbook &amp; Dokumentasi · 22 mahasiswa · 3 prodi</p>
+        </div>
         <nav>
-          <button className={tab === "dokumentasi" ? "on" : ""} onClick={() => setTab("dokumentasi")}>Dokumentasi</button>
-          <button className={tab === "logbook" ? "on" : ""} onClick={() => setTab("logbook")}>Logbook</button>
+          <button className={tab === "dokumentasi" ? "on" : ""} onClick={() => setTab("dokumentasi")}>🖼️ Dokumentasi</button>
+          <button className={tab === "logbook" ? "on" : ""} onClick={() => setTab("logbook")}>📒 Logbook</button>
         </nav>
       </header>
 

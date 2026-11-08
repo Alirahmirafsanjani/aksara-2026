@@ -136,15 +136,28 @@ export default function Logbook() {
               {field("Hasil Pelaksanaan Kegiatan", "hasil", true)}
               {field("Capaian Kompetensi Mahasiswa", "capaian", true)}
               <label>Bukti Pelaksanaan Kegiatan (satu tautan foto)
-                <input value={form.bukti} onChange={(e) => setForm({ ...form, bukti: e.target.value })} placeholder="Tempel tautan atau pilih dari Dokumentasi" />
+                <input value={form.bukti} onChange={(e) => setForm({ ...form, bukti: e.target.value })} placeholder="Tempel tautan atau pilih dari Dokumentasi di bawah" />
               </label>
-              <div className="picker">
-                <select value={docFolderId} onChange={(e) => setDocFolderId(e.target.value)}>{docFolders.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
-                <select value={pickFileId} onChange={(e) => setPickFileId(e.target.value)}>
-                  <option value="">— Pilih satu foto —</option>
-                  {docFiles.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                </select>
-                <button type="button" onClick={pickBukti} disabled={loading}>Pilih bukti</button>
+              <div className="photo-picker">
+                <p className="pp-title">Pilih foto bukti dari Dokumentasi (ketuk satu foto):</p>
+                <div className="chips">
+                  {docFolders.map((f) => <button type="button" key={f.id} className={"chip-folder" + (f.id === docFolderId ? " on" : "")} onClick={() => setDocFolderId(f.id)}>{f.name}</button>)}
+                </div>
+                {docFiles.length === 0 && <p className="hint">Tidak ada foto di folder ini.</p>}
+                <div className="thumb-grid">
+                  {docFiles.map((f) => (
+                    <button type="button" key={f.id} className={"thumb-item" + (f.id === pickFileId ? " sel" : "")} onClick={() => setPickFileId(f.id)} title={f.name}>
+                      <img src={f.thumbnailUrl} alt={f.name} loading="lazy" />
+                      <span>{f.name}</span>
+                      {f.id === pickFileId && <span className="check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+                <div className="row">
+                  <button type="button" className="primary" onClick={pickBukti} disabled={loading || !pickFileId}>Gunakan foto ini sebagai bukti</button>
+                  {pickFileId && <span className="hint">{docFiles.find((f) => f.id === pickFileId)?.name}</span>}
+                </div>
+                {form.bukti && <p className="hint">Bukti saat ini: <a href={form.bukti} target="_blank" rel="noreferrer">{form.bukti.slice(0, 80)}…</a></p>}
               </div>
               <div className="row">
                 <button className="primary" onClick={save} disabled={loading || !no}>Simpan logbook</button>
