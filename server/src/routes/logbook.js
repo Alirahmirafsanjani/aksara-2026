@@ -18,30 +18,20 @@ function splitBukti(cell) {
   return { bukti: s.slice(0, i).trim(), keteranganBukti: s.slice(i + 1).trim() };
 }
 function rowToEntry(r, rowIndex) {
-  // r: array 9 kolom, rowIndex: nomor baris 1-based di sheet
-  const [no, tanggal, waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell] = [
-    r?.[0] ?? "", r?.[1] ?? "", r?.[2] ?? "", r?.[3] ?? "", r?.[4] ?? "", r?.[5] ?? "", r?.[6] ?? "", r?.[7] ?? "", r?.[8] ?? "",
+  // r: array hingga 10 kolom (I=bukti, J=keterangan). Sel lama gabungan "url | keterangan" tetap dibaca.
+  const [no, tanggal, waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell, ketCell] = [
+    r?.[0] ?? "", r?.[1] ?? "", r?.[2] ?? "", r?.[3] ?? "", r?.[4] ?? "", r?.[5] ?? "", r?.[6] ?? "", r?.[7] ?? "", r?.[8] ?? "", r?.[9] ?? "",
   ];
-  const { bukti, keteranganBukti } = splitBukti(buktiCell);
-  const filled = [waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell].some((x) => String(x).trim() !== "");
+  let { bukti, keteranganBukti } = splitBukti(buktiCell);
+  const ket = String(ketCell ?? "").trim();
+  if (ket) keteranganBukti = ket; // kolom J menang atas gabungan lama
+  const filled = [waktu, durasi, lokasi, rincian, hasil, capaian, buktiCell, ketCell].some((x) => String(x).trim() !== "");
   return { rowIndex, no: String(no ?? "").trim(), tanggal: String(tanggal ?? "").trim(), waktu: String(waktu ?? "").trim(), durasi: String(durasi ?? "").trim(), lokasi: String(lokasi ?? "").trim(), rincian: String(rincian ?? "").trim(), hasil: String(hasil ?? "").trim(), capaian: String(capaian ?? "").trim(), bukti, keteranganBukti, filled };
 }
 
 function entryToRow(e) {
-  const b = String(e.bukti ?? "").trim();
-  const k = String(e.keteranganBukti ?? "").trim();
-  let buktiCell = "";
-  if (b && k && /^https?:\/\//i.test(b)) {
-    // HYPERLINK agar tetap ter-klik meski ada keterangan. Locale Sheets ini pakai ; bukan ,.
-    const url = b.replace(/"/g, '""');
-    const disp = `${b} | ${k}`.replace(/"/g, '""');
-    buktiCell = `=HYPERLINK("${url}";"${disp}")`;
-  } else if (b && k) {
-    buktiCell = `${b} | ${k}`;
-  } else {
-    buktiCell = b || k;
-  }
-  return [String(e.no ?? "").trim(), String(e.tanggal ?? "").trim(), String(e.waktu ?? "").trim(), String(e.durasi ?? "").trim(), String(e.lokasi ?? "").trim(), String(e.rincian ?? "").trim(), String(e.hasil ?? "").trim(), String(e.capaian ?? "").trim(), buktiCell];
+  // I = tautan saja (ter-klik), J = keterangan teks biasa. Bukan dicampur.
+  return [String(e.no ?? "").trim(), String(e.tanggal ?? "").trim(), String(e.waktu ?? "").trim(), String(e.durasi ?? "").trim(), String(e.lokasi ?? "").trim(), String(e.rincian ?? "").trim(), String(e.hasil ?? "").trim(), String(e.capaian ?? "").trim(), String(e.bukti ?? "").trim(), String(e.keteranganBukti ?? "").trim()];
 }
 function validateEntry(e) {
   if (!e.no || !e.tanggal) return "No dan Tanggal wajib diisi";
@@ -72,7 +62,7 @@ router.get("/:no/entries", async (req, res, next) => {
     if (!m) return res.status(404).json({ error: "Mahasiswa tidak ditemukan" });
     const title = await sheetTitle(m.spreadsheetId);
     const sheets = sheetsClient();
-    const vals = await sheets.spreadsheets.values.get({ spreadsheetId: m.spreadsheetId, range: `'${title}'!A1:I100` });
+    const vals = await sheets.spreadsheets.values.get({ spreadsheetId: m.spreadsheetId, range: `'${title}'!A1:J100` });
     const rows = vals.data.values || [];
     const entries = rows.slice(1).map((r, i) => rowToEntry(r, i + 2)).filter((e) => e.no !== "" || e.filled);
     res.json({ mahasiswa: { no: m.no, nama: m.nama, programStudi: m.programStudi }, sheet: title, entries });
@@ -90,7 +80,7 @@ router.post("/:no/entries", async (req, res, next) => {
     const title = await sheetTitle(m.spreadsheetId);
     const sheets = sheetsClient();
     // cari baris dengan No sama
-    const vals = await sheets.spreadsheets.values.get({ spreadsheetId: m.spreadsheetId, range: `'${title}'!A1:I100` });
+    const vals = await sheets.spreadsheets.values.get({ spreadsheetId: m.spreadsheetId, range: `'${title}'!A1:J100` });
     const rows = vals.data.values || [];
     let targetRow = -1;
     for (let i = 1; i < rows.length; i++) {
@@ -100,7 +90,7 @@ router.post("/:no/entries", async (req, res, next) => {
     const values = [entryToRow(e)];
     await sheets.spreadsheets.values.update({
       spreadsheetId: m.spreadsheetId,
-      range: `'${title}'!A${targetRow}:I${targetRow}`,
+      range: `'${title}'!A${targetRow}:J${targetRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values },
     });
@@ -122,7 +112,7 @@ router.put("/:no/entries/:rowIndex", async (req, res, next) => {
     const sheets = sheetsClient();
     await sheets.spreadsheets.values.update({
       spreadsheetId: m.spreadsheetId,
-      range: `'${title}'!A${rowIndex}:I${rowIndex}`,
+      range: `'${title}'!A${rowIndex}:J${rowIndex}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [entryToRow(e)] },
     });
