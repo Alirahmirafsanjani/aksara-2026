@@ -30,7 +30,17 @@ function rowToEntry(r, rowIndex) {
 function entryToRow(e) {
   const b = String(e.bukti ?? "").trim();
   const k = String(e.keteranganBukti ?? "").trim();
-  const buktiCell = b && k ? `${b} | ${k}` : (b || k);
+  let buktiCell = "";
+  if (b && k && /^https?:\/\//i.test(b)) {
+    // HYPERLINK agar tetap ter-klik meski ada keterangan. Locale Sheets ini pakai ; bukan ,.
+    const url = b.replace(/"/g, '""');
+    const disp = `${b} | ${k}`.replace(/"/g, '""');
+    buktiCell = `=HYPERLINK("${url}";"${disp}")`;
+  } else if (b && k) {
+    buktiCell = `${b} | ${k}`;
+  } else {
+    buktiCell = b || k;
+  }
   return [String(e.no ?? "").trim(), String(e.tanggal ?? "").trim(), String(e.waktu ?? "").trim(), String(e.durasi ?? "").trim(), String(e.lokasi ?? "").trim(), String(e.rincian ?? "").trim(), String(e.hasil ?? "").trim(), String(e.capaian ?? "").trim(), buktiCell];
 }
 function validateEntry(e) {
