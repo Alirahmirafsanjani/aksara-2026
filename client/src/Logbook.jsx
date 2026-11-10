@@ -3,6 +3,15 @@ import { listProdi, listMahasiswa, listEntries, saveEntry, listFolders, listFile
 
 const EMPTY = { no: "", tanggal: "", waktu: "", durasi: "", lokasi: "", rincian: "", hasil: "", capaian: "", bukti: "", keteranganBukti: "" };
 
+// No template 1–40 = urutan hari kegiatan. Sheet tetap menyimpan angka,
+// label "Hari ke-N" hanya ditampilkan di UI.
+const hariKe = (n) => {
+  const m = String(n ?? "").match(/\d+/);
+  if (!m) return "";
+  const num = Number(m[0]);
+  return num > 0 ? `Hari ke-${num}` : "";
+};
+
 export default function Logbook() {
   const [prodis, setProdis] = useState(["Sistem Informasi", "PGSD", "Gizi"]);
   const [prodi, setProdi] = useState("");
@@ -98,13 +107,15 @@ export default function Logbook() {
   };
   const openNew = () => {
     if (!no) return setErr("Pilih mahasiswa dulu");
-    setForm(EMPTY); setFormRow(null); setJamMulai(""); setJamSelesai(""); setEditing(true); setMsg(""); setErr("");
+    const kosong = entries.find((e) => !e.filled);
+    setForm({ ...EMPTY, no: kosong?.no || "" });
+    setFormRow(null); setJamMulai(""); setJamSelesai(""); setEditing(true); setMsg(""); setErr("");
   };
   const close = () => setEditing(false);
 
   const save = async () => {
     if (!no) return setErr("Pilih mahasiswa dulu");
-    if (!form.no || !form.tanggal) return setErr("No dan Tanggal wajib diisi");
+    if (!form.no || !form.tanggal) return setErr("Nomor hari dan Tanggal wajib diisi");
     setLoading(true); setErr(""); setMsg("");
     try {
       await saveEntry(no, form, formRow);
@@ -146,16 +157,16 @@ export default function Logbook() {
           </label>
           <button onClick={() => no && loadAll(prodi, no)} disabled={loading}>Muat ulang</button>
         </div>
-        {sheet && <p className="hint">Sheet: {sheet} · {entries.filter((e) => e.filled).length} terisi / {entries.length} baris</p>}
+        {sheet && <p className="hint">Sheet: {sheet} · {entries.filter((e) => e.filled).length} terisi / {entries.length} hari</p>}
       </section>
 
       {entries.length > 0 && (
         <section className="card">
-          <div className="row between"><h3>Daftar kegiatan ({entries.length}) — ketuk untuk edit</h3><button className="primary" onClick={openNew} disabled={loading || !no}>+ Baru</button></div>
+          <div className="row between"><h3>Daftar kegiatan — {entries.length} hari (ketuk untuk edit)</h3><button className="primary" onClick={openNew} disabled={loading || !no}>+ Baru</button></div>
           <ul className="entries">
             {entries.map((e) => (
               <li key={e.rowIndex} className={"entry" + (e.filled ? " filled" : "")} onClick={() => open(e)} role="button" tabIndex={0} onKeyDown={(ev) => ev.key === "Enter" && open(e)}>
-                <div className="e-head"><b>No {e.no || "-"} · {e.tanggal || "-"}</b><span className={"chip" + (e.filled ? " on" : "")}>{e.filled ? "Terisi" : "Belum"}</span></div>
+                <div className="e-head"><b>{hariKe(e.no) || `No ${e.no || "-"}`}{hariKe(e.no) && <span className="e-no">No {e.no}</span>} · {e.tanggal || "-"}</b><span className={"chip" + (e.filled ? " on" : "")}>{e.filled ? "Terisi" : "Belum"}</span></div>
                 <div className="e-meta">{e.waktu || "—"} · {e.lokasi || "—"}</div>
                 <div className="e-rincian">{e.rincian || <i>belum diisi — ketuk untuk mengisi</i>}</div>
                 {e.keteranganBukti && <div className="e-meta">Keterangan bukti: {e.keteranganBukti}</div>}
@@ -169,10 +180,13 @@ export default function Logbook() {
       {editing && (
         <div className="modal" onClick={close}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="row between"><h3>{formRow ? `Edit baris ${formRow}` : "Catatan baru"}</h3><button className="x" onClick={close} aria-label="Tutup">✕</button></div>
+            <div className="row between"><h3>{formRow ? `Edit ${hariKe(form.no) || `baris ${formRow}`}` : "Catatan baru"}</h3><button className="x" onClick={close} aria-label="Tutup">✕</button></div>
             {err && <p className="error">{err}</p>}
             <div className="form">
-              {field("No", "no")}
+              <label>No hari (1–40)
+                <input value={form.no} onChange={(e) => setForm({ ...form, no: e.target.value })} inputMode="numeric" placeholder="Contoh: 3" />
+                <span className="hint">{hariKe(form.no) ? `Akan tampil sebagai ${hariKe(form.no)} di daftar kegiatan.` : "Nomor ini menentukan Hari ke-N di daftar kegiatan."}</span>
+              </label>
               {field("Tanggal Pelaksanaan", "tanggal")}
               <div className="row" style={{ alignItems: "flex-end" }}>
                 <label>Jam mulai<input type="time" value={jamMulai} onChange={(e) => onJam("mulai", e.target.value)} /></label>
