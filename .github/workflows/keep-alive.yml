@@ -1,0 +1,16 @@
+# Ping ringan agar Render Free tidak tidur (tidur setelah 15 menit tanpa traffic).
+# Catatan: jadwal GitHub Actions bisa terlambat beberapa menit; untuk hasil lebih
+# rapi gunakan cron-job.org tiap 10 menit (lihat docs/DEPLOY.md).
+name: Keep Render awake
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/health
+        run: curl -fsS --max-time 90 https://aksara-2026.onrender.com/api/health

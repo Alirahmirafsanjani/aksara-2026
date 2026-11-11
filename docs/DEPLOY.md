@@ -37,6 +37,8 @@ Yang sudah ditangani aplikasi:
 4. Catatan kuota Free: 750 jam/bulan per workspace. Satu service yang selalu menyala ±730 jam/bulan (masih masuk, tapi mepet). Aktifkan ping hanya saat periode pemakaian (mis. masa kegiatan) untuk menghemat.
 5. Render tidak menyarankan Free untuk produksi; bila butuh andal penuh, upgrade ke **Starter ±$7/bulan** (tidak tidur + bisa Persistent Disk).
 
+Alternatif tanpa daftar layanan: workflow GitHub Actions di `.github/workflows/keep-alive.yml` (ping tiap 5 menit). Jadwal GitHub bisa terlambat beberapa menit, jadi cron-job.org tetap lebih tepat. GitHub menonaktifkan workflow terjadwal pada repo publik yang 60 hari tidak ada aktivitas — buka tab Actions lalu aktifkan lagi bila perlu.
+
 Token backup tetap berguna walau pakai ping: redeploy/restart tidak menghapus akses lagi.
 
 ## Catatan
