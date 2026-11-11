@@ -12,6 +12,31 @@ const hariKe = (n) => {
   return num > 0 ? `Hari ke-${num}` : "";
 };
 
+// Draft logbook yang belum disimpan: disimpan di localStorage per mahasiswa + baris,
+// supaya isian tetap ada saat modal ditutup / aplikasi dibuka kembali.
+const DRAFT_PREFIX = "aksara:logbook-draft:v1";
+const draftKey = (mhs, row) => `${DRAFT_PREFIX}:${mhs || "-"}:${row ?? "new"}`;
+const readDraft = (mhs, row) => {
+  try {
+    const raw = localStorage.getItem(draftKey(mhs, row));
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    return d && d.form ? d : null;
+  } catch { return null; }
+};
+const writeDraft = (mhs, row, data) => {
+  try { localStorage.setItem(draftKey(mhs, row), JSON.stringify({ ...data, savedAt: Date.now() })); } catch { /* penyimpanan penuh / mode privat */ }
+};
+const removeDraft = (mhs, row) => {
+  try { localStorage.removeItem(draftKey(mhs, row)); } catch { /* abaikan */ }
+};
+const sameForm = (a, b) => {
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  for (const k of keys) if (String(a?.[k] ?? "") !== String(b?.[k] ?? "")) return false;
+  return true;
+};
+const fmtDraftTime = (t) => new Date(t).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
 export default function Logbook() {
   const [prodis, setProdis] = useState(["Sistem Informasi", "PGSD", "Gizi"]);
   const [prodi, setProdi] = useState("");
@@ -24,6 +49,9 @@ export default function Logbook() {
   const [editing, setEditing] = useState(false);
   const [jamMulai, setJamMulai] = useState("");
   const [jamSelesai, setJamSelesai] = useState("");
+  const [draftAt, setDraftAt] = useState(0);
+  const [draftRows, setDraftRows] = useState({});
+  const [baseline, setBaseline] = useState(null);
   const parseWaktu = (s) => {
     const t = String(s || "").match(/(\d{1,2})[.:](\d{2})/g) || [];
     return t.length >= 2 ? [t[0].replace(".", ":").padStart(5, "0"), t[1].replace(".", ":").padStart(5, "0")] : ["", ""];
@@ -97,21 +125,84 @@ export default function Logbook() {
   useEffect(() => { setNo(""); setEntries([]); if (prodi) loadAll(prodi, ""); }, [prodi, loadAll]);
   useEffect(() => { if (docFolderId) listFiles(docFolderId).then((d) => { setDocFiles(d.files || []); setDocSubs(d.subfolders || []); }).catch(() => { setDocFiles([]); setDocSubs([]); }); }, [docFolderId]);
 
+  const refreshDraftRows = useCallback(() => {
+    const map = {};
+    try {
+      const prefix = `${DRAFT_PREFIX}:${no}:`;
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) map[k.slice(prefix.length)] = true;
+      }
+    } catch { /* localStorage tidak tersedia */ }
+    setDraftRows(map);
+  }, [no]);
+
+  useEffect(() => { refreshDraftRows(); }, [refreshDraftRows, entries]);
+
+  // Autosave draft setiap ada perubahan di form (langsung, agar tidak hilang saat ditutup).
+  useEffect(() => {
+    if (!editing || !no) return undefined;
+    const key = String(formRow ?? "new");
+    const unchanged = !baseline
+      || (sameForm(form, baseline.form) && jamMulai === baseline.jamMulai && jamSelesai === baseline.jamSelesai);
+    if (unchanged) {
+      removeDraft(no, formRow);
+      setDraftAt(0);
+      setDraftRows((m) => {
+        if (!m[key]) return m;
+        const next = { ...m };
+        delete next[key];
+        return next;
+      });
+      return undefined;
+    }
+    writeDraft(no, formRow, { form, jamMulai, jamSelesai });
+    setDraftAt(Date.now());
+    setDraftRows((m) => (m[key] ? m : { ...m, [key]: true }));
+    return undefined;
+  }, [editing, no, formRow, form, jamMulai, jamSelesai, baseline]);
+
   const open = (e) => {
-    setForm({ no: e.no, tanggal: e.tanggal, waktu: e.waktu, durasi: e.durasi, lokasi: e.lokasi, rincian: e.rincian, hasil: e.hasil, capaian: e.capaian, bukti: e.bukti, keteranganBukti: e.keteranganBukti || "" });
-    const [a, b] = parseWaktu(e.waktu);
-    setJamMulai(a); setJamSelesai(b);
+    const asli = Object.fromEntries(Object.keys(EMPTY).map((k) => [k, String(e[k] ?? "")]));
+    const d = readDraft(no, e.rowIndex);
+    const src = d?.form ? { ...asli, ...d.form } : asli;
+    setForm(src);
+    const [a, b] = parseWaktu(src.waktu);
+    setJamMulai(d?.jamMulai ?? a); setJamSelesai(d?.jamSelesai ?? b);
+    setBaseline({ form: asli, jamMulai: a, jamSelesai: b });
     setFormRow(e.rowIndex);
     setEditing(true);
-    setMsg(""); setErr("");
+    setDraftAt(d?.savedAt || 0);
+    setMsg(d?.savedAt ? `Draft tersimpan dipulihkan (${fmtDraftTime(d.savedAt)}).` : ""); setErr("");
   };
   const openNew = () => {
     if (!no) return setErr("Pilih mahasiswa dulu");
     const kosong = entries.find((e) => !e.filled);
-    setForm({ ...EMPTY, no: kosong?.no || "" });
-    setFormRow(null); setJamMulai(""); setJamSelesai(""); setEditing(true); setMsg(""); setErr("");
+    const d = readDraft(no, null);
+    const base = { ...EMPTY, no: kosong?.no || "" };
+    const src = d?.form ? { ...base, ...d.form } : base;
+    setForm(src);
+    setBaseline({ form: base, jamMulai: "", jamSelesai: "" });
+    setFormRow(null);
+    setJamMulai(d?.jamMulai || ""); setJamSelesai(d?.jamSelesai || "");
+    setEditing(true);
+    setDraftAt(d?.savedAt || 0);
+    setMsg(d?.savedAt ? `Draft catatan baru dipulihkan (${fmtDraftTime(d.savedAt)}).` : ""); setErr("");
   };
-  const close = () => setEditing(false);
+  const close = () => {
+    const berubah = editing && no && baseline
+      && !(sameForm(form, baseline.form) && jamMulai === baseline.jamMulai && jamSelesai === baseline.jamSelesai);
+    if (berubah) writeDraft(no, formRow, { form, jamMulai, jamSelesai });
+    setEditing(false); setDraftAt(0); refreshDraftRows();
+    setMsg(berubah ? "Draft tersimpan di perangkat ini — buka lagi barisnya untuk melanjutkan." : "");
+  };
+  const hapusDraft = () => {
+    removeDraft(no, formRow);
+    setDraftAt(0);
+    setEditing(false);
+    refreshDraftRows();
+    setMsg("Draft dihapus. Data di spreadsheet tidak berubah.");
+  };
 
   const save = async () => {
     if (!no) return setErr("Pilih mahasiswa dulu");
@@ -119,9 +210,12 @@ export default function Logbook() {
     setLoading(true); setErr(""); setMsg("");
     try {
       await saveEntry(no, form, formRow);
+      removeDraft(no, formRow);
+      setDraftAt(0);
       setEditing(false);
       setMsg(`Tersimpan ke spreadsheet (baris ${formRow || "-"})`);
       await loadAll(prodi, no);
+      refreshDraftRows();
     } catch (e) { setErr(e.message); }
     setLoading(false);
   };
@@ -158,6 +252,9 @@ export default function Logbook() {
           <button onClick={() => no && loadAll(prodi, no)} disabled={loading}>Muat ulang</button>
         </div>
         {sheet && <p className="hint">Sheet: {sheet} · {entries.filter((e) => e.filled).length} terisi / {entries.length} hari</p>}
+        {Object.keys(draftRows).length > 0 && (
+          <p className="hint"><span className="chip draft">Draft</span> {Object.keys(draftRows).length} isian belum disimpan masih tersimpan di perangkat ini — ketuk barisnya untuk melanjutkan.</p>
+        )}
       </section>
 
       {entries.length > 0 && (
@@ -166,7 +263,7 @@ export default function Logbook() {
           <ul className="entries">
             {entries.map((e) => (
               <li key={e.rowIndex} className={"entry" + (e.filled ? " filled" : "")} onClick={() => open(e)} role="button" tabIndex={0} onKeyDown={(ev) => ev.key === "Enter" && open(e)}>
-                <div className="e-head"><b>{hariKe(e.no) || `No ${e.no || "-"}`}{hariKe(e.no) && <span className="e-no">No {e.no}</span>} · {e.tanggal || "-"}</b><span className={"chip" + (e.filled ? " on" : "")}>{e.filled ? "Terisi" : "Belum"}</span></div>
+                <div className="e-head"><b>{hariKe(e.no) || `No ${e.no || "-"}`}{hariKe(e.no) && <span className="e-no">No {e.no}</span>} · {e.tanggal || "-"}</b><span className="e-chips">{draftRows[String(e.rowIndex)] && <span className="chip draft">Draft</span>}<span className={"chip" + (e.filled ? " on" : "")}>{e.filled ? "Terisi" : "Belum"}</span></span></div>
                 <div className="e-meta">{e.waktu || "—"} · {e.lokasi || "—"}</div>
                 <div className="e-rincian">{e.rincian || <i>belum diisi — ketuk untuk mengisi</i>}</div>
                 {e.keteranganBukti && <div className="e-meta">Keterangan bukti: {e.keteranganBukti}</div>}
@@ -182,6 +279,7 @@ export default function Logbook() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="row between"><h3>{formRow ? `Edit ${hariKe(form.no) || `baris ${formRow}`}` : "Catatan baru"}</h3><button className="x" onClick={close} aria-label="Tutup">✕</button></div>
             {err && <p className="error">{err}</p>}
+            {msg && <p className="ok">{msg}</p>}
             <div className="form">
               <label>No hari (1–40)
                 <input value={form.no} onChange={(e) => setForm({ ...form, no: e.target.value })} inputMode="numeric" placeholder="Contoh: 3" />
@@ -259,9 +357,11 @@ export default function Logbook() {
                   </div>
                 )}
               </div>
+              <p className="hint draft-note">{draftAt ? `Draft tersimpan otomatis di perangkat ini · ${fmtDraftTime(draftAt)}` : "Isian otomatis disimpan sebagai draft di perangkat ini sampai Anda menekan Simpan logbook."}</p>
               <div className="row">
                 <button className="primary" onClick={save} disabled={loading || !no}>Simpan logbook</button>
-                <button onClick={close} disabled={loading}>Batal</button>
+                <button onClick={close} disabled={loading}>Tutup (draft disimpan)</button>
+                <button onClick={hapusDraft} disabled={loading}>Hapus draft</button>
               </div>
             </div>
           </div>
