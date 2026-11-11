@@ -6,8 +6,13 @@
 #   GOOGLE_DRIVE_LOG_BOOK_PARENT_FOLDER_ID=1KPltSlYvp8gboHi69aC7FzyDW98mjJPm
 #   GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET (dari Google Cloud)
 #   GOOGLE_OAUTH_REDIRECT_URI=https://aksara-2026.onrender.com/api/auth/callback
-#   DATA_DIR=/data/aksara-data (Persistent Disk — simpan .tokens.json OAuth)
 # Secret File: aksara-2026-514022-584b4a49f95d.json = isi JSON service account.
+#
+# Catatan paket Free:
+#   - Service tidur setelah 15 menit tanpa traffic; pakai ping eksternal 10 menit
+#     ke /api/health bila perlu selalu siap (lihat docs/DEPLOY.md).
+#   - Free tidak bisa Persistent Disk. Token OAuth otomatis dicadangkan ke
+#     folder Drive "Aksara Config" dan dipulihkan saat server bangun.
 services:
   - type: web
     name: aksara-2026
@@ -18,9 +23,3 @@ services:
         value: 3000
       - key: NODE_ENV
         value: production
-      - key: DATA_DIR
-        value: /data/aksara-data
-    disks:
-      - name: aksara-data
-        mountPath: /data/aksara-data
-        sizeGB: 1

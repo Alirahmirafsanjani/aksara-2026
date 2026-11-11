@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import docsRouter from "./routes/docs.js";
 import logbookRouter from "./routes/logbook.js";
 import authRouter from "./routes/auth.js";
+import { restoreOAuthTokenSafe } from "./tokenStore.js";
 
 const serverDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = join(serverDir, "../client/dist");
@@ -38,7 +39,14 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-if (import.meta.url === `file://${process.argv[1]}`) {
+async function start() {
+  // Render Free menghapus filesystem saat tidur/redeploy: pulihkan token OAuth dari Drive.
+  const r = await restoreOAuthTokenSafe();
+  if (r.restored) console.log("Token OAuth dipulihkan dari Drive.");
+  else if (r.reason) console.log(`Restore token OAuth: ${r.reason}`);
   app.listen(port, () => console.log(`aksara-backend listening on :${port}`));
+}
+if (import.meta.url === `file://${process.argv[1]}`) {
+  start();
 }
 export default app;
