@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { listProdi, listMahasiswa, listEntries, saveEntry, listFolders, listFiles } from "./api.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { listProdi, listMahasiswa, listEntries, saveEntry, listFolders, listFiles, listRekap } from "./api.js";
 
 const EMPTY = { no: "", tanggal: "", waktu: "", durasi: "", lokasi: "", rincian: "", hasil: "", capaian: "", bukti: "", keteranganBukti: "" };
 
@@ -36,6 +36,32 @@ const sameForm = (a, b) => {
   return true;
 };
 const fmtDraftTime = (t) => new Date(t).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+// Parse & jumlahkan durasi ("2 jam 30 menit", "2 jam", "45 menit", "HH:MM")
+const parseDurasiMenit = (s) => {
+  const t = String(s ?? "").toLowerCase();
+  if (!t.trim()) return 0;
+  const jam = t.match(/(\d+)\s*(jam|j\b)/);
+  const menit = t.match(/(\d+)\s*(menit|mnt|m\b)/);
+  let total = 0;
+  if (jam) total += Number(jam[1]) * 60;
+  if (menit) total += Number(menit[1]);
+  if (!jam && !menit) {
+    const hm = t.match(/(\d+)\s*[:.]\s*(\d+)/);
+    if (hm) total = Number(hm[1]) * 60 + Number(hm[2]);
+    else { const n = t.match(/^\s*(\d+)\s*$/); if (n) total = Number(n[1]); }
+  }
+  return Number.isFinite(total) ? total : 0;
+};
+const formatMenit = (total) => {
+  const t = Math.max(0, Math.round(Number(total) || 0));
+  const h = Math.floor(t / 60);
+  const m = t % 60;
+  if (h && m) return `${h} jam ${m} menit`;
+  if (h) return `${h} jam`;
+  if (m) return `${m} menit`;
+  return "0 menit";
+};
 
 export default function Logbook() {
   const [prodis, setProdis] = useState(["Sistem Informasi", "PGSD", "Gizi"]);
@@ -80,6 +106,10 @@ export default function Logbook() {
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rekap, setRekap] = useState([]);
+  const [rekapLoading, setRekapLoading] = useState(false);
+  const [rekapErr, setRekapErr] = useState("");
+  const [showRekap, setShowRekap] = useState(false);
   const [docFolders, setDocFolders] = useState([]);
   const [docFolderId, setDocFolderId] = useState("");
   const [docFiles, setDocFiles] = useState([]);
@@ -116,13 +146,30 @@ export default function Logbook() {
     setLoading(false);
   }, []);
 
+  const totalJam = useMemo(() => {
+    const menit = entries.reduce((sum, e) => sum + parseDurasiMenit(e.durasi), 0);
+    const terisi = entries.filter((e) => e.filled).length;
+    return { menit, label: formatMenit(menit), terisi };
+  }, [entries]);
+
+  const loadRekap = async () => {
+    if (!prodi) return setRekapErr("Pilih program studi dulu");
+    setRekapErr(""); setRekapLoading(true);
+    try {
+      const d = await listRekap(prodi);
+      setRekap(d.rekap || []);
+      setShowRekap(true);
+    } catch (e) { setRekapErr(e.message); }
+    setRekapLoading(false);
+  };
+
   useEffect(() => {
     listProdi().then((d) => { setProdis(d.programStudi || prodis); setProdi(d.programStudi?.[0] || ""); }).catch((e) => setErr(e.message));
     listFolders().then((d) => { setDocFolders(d.folders || []); if (d.folders?.length) setDocFolderId(d.folders[0].id); }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { setNo(""); setEntries([]); if (prodi) loadAll(prodi, ""); }, [prodi, loadAll]);
+  useEffect(() => { setNo(""); setEntries([]); setRekap([]); setShowRekap(false); setRekapErr(""); if (prodi) loadAll(prodi, ""); }, [prodi, loadAll]);
   useEffect(() => { if (docFolderId) listFiles(docFolderId).then((d) => { setDocFiles(d.files || []); setDocSubs(d.subfolders || []); }).catch(() => { setDocFiles([]); setDocSubs([]); }); }, [docFolderId]);
 
   const refreshDraftRows = useCallback(() => {
@@ -251,10 +298,48 @@ export default function Logbook() {
           </label>
           <button onClick={() => no && loadAll(prodi, no)} disabled={loading}>Muat ulang</button>
         </div>
-        {sheet && <p className="hint">Sheet: {sheet} · {entries.filter((e) => e.filled).length} terisi / {entries.length} hari</p>}
+        {sheet && <p className="hint">Sheet: {sheet} · {totalJam.terisi} terisi / {entries.length} hari</p>}
+        {no && entries.length > 0 && (
+          <div className="total-jam" role="status">
+            <div>
+              <div className="total-jam-label">Total jam kerja</div>
+              <div className="total-jam-value">{totalJam.label}</div>
+            </div>
+            <div className="total-jam-meta">{totalJam.terisi} kegiatan terisi · {entries.length} hari</div>
+          </div>
+        )}
         {Object.keys(draftRows).length > 0 && (
           <p className="hint"><span className="chip draft">Draft</span> {Object.keys(draftRows).length} isian belum disimpan masih tersimpan di perangkat ini — ketuk barisnya untuk melanjutkan.</p>
         )}
+
+        <div className="rekap-box">
+          <div className="row between">
+            <div>
+              <strong>Rekap jam kerja — {prodi || "Program studi"}</strong>
+              <p className="hint" style={{ margin: "2px 0 0" }}>Tampilkan total jam kerja masing-masing mahasiswa.</p>
+            </div>
+            <button onClick={loadRekap} disabled={rekapLoading || !prodi}>{rekapLoading ? "Memuat..." : "Muat rekap"}</button>
+          </div>
+          {rekapErr && <p className="error">{rekapErr}</p>}
+          {showRekap && (
+            rekap.length === 0 ? <p className="hint">Tidak ada data mahasiswa.</p> : (
+              <div className="rekap-table-wrap">
+                <table className="rekap-table">
+                  <thead><tr><th>Mahasiswa</th><th>Terisi</th><th>Total jam kerja</th></tr></thead>
+                  <tbody>
+                    {rekap.map((r) => (
+                      <tr key={r.no} className={String(r.no) === String(no) ? "on" : ""}>
+                        <td>{r.nama}{r.error ? <span className="hint"> ({r.error})</span> : ""}</td>
+                        <td>{r.terisi} hari</td>
+                        <td><strong>{r.totalLabel || "-"}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
+        </div>
       </section>
 
       {entries.length > 0 && (

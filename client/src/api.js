@@ -42,3 +42,7 @@ export async function saveEntry(no, entry, rowIndex, signal) {
   const url = `${API}/api/logbook/${encodeURIComponent(no)}/entries${isEdit ? `/${rowIndex}` : ""}`;
   const r = await fetch(url, { signal, method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry) }); return parse(r);
 }
+export async function listRekap(prodi, signal) {
+  const q = prodi ? `?prodi=${encodeURIComponent(prodi)}` : "";
+  const r = await fetch(`${API}/api/logbook/rekap${q}`, { signal }); return parse(r);
+}

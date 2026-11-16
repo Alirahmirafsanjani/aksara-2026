@@ -3,6 +3,54 @@ import { sheetsClient, loadMahasiswa, findMahasiswaByNo, KOLOM_LOGBOOK } from ".
 
 const router = Router();
 
+// "2 jam 30 menit" / "2 jam" / "45 menit" -> menit. Toleran terhadap variasi teks.
+function parseDurasiMenit(s) {
+  const t = String(s ?? "").toLowerCase();
+  if (!t.trim()) return 0;
+  const jam = t.match(/(\d+)\s*(jam|j\b)/);
+  const menit = t.match(/(\d+)\s*(menit|mnt|m\b)/);
+  let total = 0;
+  if (jam) total += Number(jam[1]) * 60;
+  if (menit) total += Number(menit[1]);
+  if (!jam && !menit) {
+    // fallback: format "HH:MM" atau angka menit saja
+    const hm = t.match(/(\d+)\s*[:.]\s*(\d+)/);
+    if (hm) total = Number(hm[1]) * 60 + Number(hm[2]);
+    else {
+      const n = t.match(/^\s*(\d+)\s*$/);
+      if (n) total = Number(n[1]);
+    }
+  }
+  return Number.isFinite(total) ? total : 0;
+}
+function formatMenit(total) {
+  const t = Math.max(0, Math.round(Number(total) || 0));
+  const h = Math.floor(t / 60);
+  const m = t % 60;
+  if (h && m) return `${h} jam ${m} menit`;
+  if (h) return `${h} jam`;
+  if (m) return `${m} menit`;
+  return "0 menit";
+}
+function sumDurasiEntries(entries) {
+  let menit = 0;
+  let terisi = 0;
+  for (const e of entries || []) {
+    if (e.filled) terisi += 1;
+    menit += parseDurasiMenit(e.durasi);
+  }
+  return { totalMenit: menit, totalLabel: formatMenit(menit), terisi };
+}
+
+async function readEntries(spreadsheetId) {
+  const title = await sheetTitle(spreadsheetId);
+  const sheets = sheetsClient();
+  const vals = await sheets.spreadsheets.values.get({ spreadsheetId, range: `'${title}'!A1:J100` });
+  const rows = vals.data.values || [];
+  const entries = rows.slice(1).map((r, i) => rowToEntry(r, i + 2)).filter((e) => e.no !== "" || e.filled);
+  return { title, entries };
+}
+
 async function sheetTitle(spreadsheetId) {
   const sheets = sheetsClient();
   const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties" });
@@ -60,12 +108,27 @@ router.get("/:no/entries", async (req, res, next) => {
   try {
     const m = findMahasiswaByNo(req.params.no);
     if (!m) return res.status(404).json({ error: "Mahasiswa tidak ditemukan" });
-    const title = await sheetTitle(m.spreadsheetId);
-    const sheets = sheetsClient();
-    const vals = await sheets.spreadsheets.values.get({ spreadsheetId: m.spreadsheetId, range: `'${title}'!A1:J100` });
-    const rows = vals.data.values || [];
-    const entries = rows.slice(1).map((r, i) => rowToEntry(r, i + 2)).filter((e) => e.no !== "" || e.filled);
-    res.json({ mahasiswa: { no: m.no, nama: m.nama, programStudi: m.programStudi }, sheet: title, entries });
+    const { title, entries } = await readEntries(m.spreadsheetId);
+    const ringkasan = sumDurasiEntries(entries);
+    res.json({ mahasiswa: { no: m.no, nama: m.nama, programStudi: m.programStudi }, sheet: title, entries, ringkasan });
+  } catch (e) { next(e); }
+});
+
+// GET /api/logbook/rekap?prodi=... — total jam kerja per mahasiswa (sekuensial agar aman dari rate limit)
+router.get("/rekap", async (req, res, next) => {
+  try {
+    const prodi = String(req.query.prodi || "").trim();
+    const list = (loadMahasiswa().mahasiswa || []).filter((m) => !prodi || m.programStudi === prodi);
+    const rekap = [];
+    for (const m of list) {
+      try {
+        const { entries } = await readEntries(m.spreadsheetId);
+        rekap.push({ no: m.no, nama: m.nama, programStudi: m.programStudi, ...sumDurasiEntries(entries) });
+      } catch (e) {
+        rekap.push({ no: m.no, nama: m.nama, programStudi: m.programStudi, totalMenit: 0, totalLabel: "-", terisi: 0, error: e.message });
+      }
+    }
+    res.json({ prodi: prodi || "Semua", rekap });
   } catch (e) { next(e); }
 });
 
